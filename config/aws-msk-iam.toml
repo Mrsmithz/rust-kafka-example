@@ -1,0 +1,70 @@
+[service]
+name = "rust-kafka-service"
+
+[http]
+bind = "0.0.0.0:8080"
+
+[health]
+startup_timeout_ms = 30000
+kafka_probe_interval_ms = 5000
+kafka_probe_timeout_ms = 2000
+kafka_stale_after_ms = 15000
+
+[processing]
+max_concurrent_messages = 32
+message_timeout_ms = 30000
+
+[metrics]
+kafka_statistics_interval_ms = 10000
+native_statistics_stale_after_ms = 30000
+processing_duration_buckets_seconds = [0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 15.0, 30.0, 60.0]
+http_duration_buckets_seconds = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0]
+# Configure known output topics before deployment. Unlisted topics use __other__.
+producer_topics = []
+
+[shutdown]
+grace_period_ms = 60000
+
+[kafka]
+auth_profile = "msk-iam"
+
+[kafka.auth_profiles.msk-iam]
+kind = "aws_msk_iam"
+region = "us-east-1"
+credentials = "default_chain"
+
+# Replace this hostname with the cluster's IAM bootstrap brokers.
+[kafka.common_properties]
+"bootstrap.servers" = "b-1.example.kafka.us-east-1.amazonaws.com:9098"
+
+[kafka.consumer]
+commit_timeout_ms = 10000
+group_id = "rust-kafka-service-v1"
+
+[kafka.consumer.properties]
+"auto.offset.reset" = "earliest"
+"enable.auto.commit" = "false"
+"enable.auto.offset.store" = "false"
+"session.timeout.ms" = "45000"
+"heartbeat.interval.ms" = "3000"
+"max.poll.interval.ms" = "300000"
+"fetch.min.bytes" = "1"
+"fetch.wait.max.ms" = "100"
+"queued.max.messages.kbytes" = "16384"
+
+[[kafka.consumer.topics]]
+name = "input-events"
+consumers = 2
+batch_size = 200
+batch_max_wait_ms = 100
+max_batch_bytes = 8388608
+
+[kafka.producer]
+enqueue_timeout_ms = 1000
+
+[kafka.producer.properties]
+"acks" = "all"
+"enable.idempotence" = "true"
+"message.timeout.ms" = "30000"
+"queue.buffering.max.messages" = "10000"
+"queue.buffering.max.kbytes" = "16384"

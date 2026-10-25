@@ -1,0 +1,86 @@
+[service]
+name = "rust-kafka-service"
+
+[http]
+bind = "0.0.0.0:8080"
+
+# To serve HTTPS directly, enable TLS and supply both PEM files.
+# [http.tls]
+# enabled = true
+# cert_file = "/run/secrets/server.crt"
+# key_file = "/run/secrets/server.key"
+
+[health]
+startup_timeout_ms = 30000
+kafka_probe_interval_ms = 5000
+kafka_probe_timeout_ms = 2000
+kafka_stale_after_ms = 15000
+
+[processing]
+max_concurrent_messages = 32
+message_timeout_ms = 30000
+
+[metrics]
+kafka_statistics_interval_ms = 10000
+native_statistics_stale_after_ms = 30000
+processing_duration_buckets_seconds = [0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 15.0, 30.0, 60.0]
+http_duration_buckets_seconds = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0]
+# Configure known output topics before deployment. Unlisted topics use __other__.
+producer_topics = []
+
+[shutdown]
+grace_period_ms = 60000
+
+[kafka]
+auth_profile = "local"
+
+[kafka.auth_profiles.local]
+kind = "plaintext"
+
+# Select this profile for SCRAM over TLS instead of local plaintext.
+# [kafka.auth_profiles.scram]
+# kind = "sasl_scram"
+# mechanism = "SCRAM-SHA-512"
+# username_file = "/run/secrets/kafka-username"
+# password_file = "/run/secrets/kafka-password"
+# ca_file = "/run/secrets/kafka-ca.pem"
+
+# Consumer, producer, and individual topic settings can override auth_profile.
+# Authentication-owned librdkafka properties come from the selected profile.
+[kafka.common_properties]
+"bootstrap.servers" = "localhost:9092"
+
+[kafka.consumer]
+commit_timeout_ms = 10000
+group_id = "rust-kafka-service-v1"
+
+[kafka.consumer.properties]
+"auto.offset.reset" = "earliest"
+"enable.auto.commit" = "false"
+"enable.auto.offset.store" = "false"
+"session.timeout.ms" = "45000"
+"heartbeat.interval.ms" = "3000"
+"max.poll.interval.ms" = "300000"
+"fetch.min.bytes" = "1"
+"fetch.wait.max.ms" = "100"
+"queued.max.messages.kbytes" = "16384"
+
+[[kafka.consumer.topics]]
+name = "input-events"
+consumers = 2
+batch_size = 200
+batch_max_wait_ms = 100
+max_batch_bytes = 8388608
+
+[kafka.consumer.topics.properties]
+"auto.offset.reset" = "earliest"
+
+[kafka.producer.properties]
+"acks" = "all"
+"enable.idempotence" = "true"
+"message.timeout.ms" = "30000"
+"queue.buffering.max.messages" = "10000"
+"queue.buffering.max.kbytes" = "16384"
+
+[kafka.producer]
+enqueue_timeout_ms = 1000

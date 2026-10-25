@@ -1,0 +1,8 @@
+target
+.git
+.audit
+.tools
+.agents
+*.pem
+*.key
+.env

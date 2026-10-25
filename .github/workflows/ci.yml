@@ -1,0 +1,15 @@
+name: Rust checks
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.0
+        with:
+          components: rustfmt, clippy
+      - run: sudo apt-get update && sudo apt-get install -y cmake perl make g++
+      - run: bash scripts/check.sh
+      - run: cargo build --locked
+      - run: python3 scripts/broker-smoke.py --engine docker
+      - run: docker build -t rust-kafka-service:ci .

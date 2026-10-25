@@ -1,0 +1,7 @@
+/target/
+/.tools/
+/.audit/
+__pycache__/
+*.pem
+*.key
+.env
